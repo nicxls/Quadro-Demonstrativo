@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Transporte Escolar — Cálculo Mensal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#eef2f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color:#1b2733; }
+  .te-wrap { max-width: 1180px; margin: 0 auto; padding: 24px; }
+  .te-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 24px; flex-wrap:wrap; gap:12px; }
+  .te-title { font-size: 22px; font-weight: 700; color: #16324a; letter-spacing: -0.01em; }
+  .te-sub { font-size: 13px; color: #5b6b7a; margin-top: 2px; }
+  .te-btn { background:#16324a; color:#fff; border:none; border-radius:8px; padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px; }
+  .te-btn:hover { background:#1e4363; }
+  .te-btn.secondary { background:#fff; color:#16324a; border:1px solid #c7d2dc; }
+  .te-btn.secondary:hover { background:#f0f4f8; }
+  .te-btn.ghost { background:transparent; color:#a33; border:1px solid transparent; padding:6px 10px; font-size:13px; font-weight:500;}
+  .te-btn.ghost:hover { background:#fdeceb; }
+  .te-card { background:#fff; border:1px solid #dde4ea; border-radius:12px; padding:18px 20px; margin-bottom:16px; }
+  .te-card-kmprice { background:#f3f7fa; border:1px solid #cddce7; border-radius:12px; padding:16px 20px; margin-bottom:20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .te-label { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:#5b6b7a; margin-bottom:6px; display:block; }
+  .te-input { width:100%; box-sizing:border-box; border:1px solid #c7d2dc; border-radius:7px; padding:8px 10px; font-size:14px; color:#1b2733; background:#fff; }
+  .te-input:focus { outline:2px solid #7fa8c9; outline-offset:0; border-color:#16324a; }
+  .te-geo-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .te-geo-badge { background:#16324a; color:#fff; font-size:12px; font-weight:700; padding:4px 10px; border-radius:20px; }
+  .te-grid2 { display:grid; grid-template-columns: 1.2fr 1fr; gap:14px; margin-bottom:14px; }
+  .te-section-title { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:#5b6b7a; margin: 14px 0 8px; }
+  .te-escola-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+  .te-dia-row { display:grid; grid-template-columns: 1fr 1fr auto; gap:8px; align-items:center; margin-bottom:8px; }
+  .te-diagroup { background:#f7f9fb; border:1px solid #dde4ea; border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+  .te-checkboxes { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .te-daychip { display:inline-flex; align-items:center; gap:5px; font-size:12.5px; border:1px solid #c7d2dc; background:#fff; border-radius:20px; padding:5px 10px; cursor:pointer; user-select:none; color:#3c4a58; }
+  .te-daychip input { accent-color:#16324a; }
+  .te-daychip.active { background:#16324a; border-color:#16324a; color:#fff; }
+  .te-diagroup-row { display:flex; align-items:flex-end; gap:8px; }
+  .te-preview { font-size:12px; color:#5b6b7a; margin-top:8px; }
+  .te-add-btn { font-size:13px; color:#16324a; background:none; border:1px dashed #a9bccb; border-radius:7px; padding:6px 10px; cursor:pointer; }
+  .te-add-btn:hover { background:#f0f4f8; }
+  .te-remove { background:none; border:none; color:#a33; cursor:pointer; font-size:16px; line-height:1; padding:4px 6px; border-radius:6px; }
+  .te-remove:hover { background:#fdeceb; }
+  .te-table-wrap { overflow-x:auto; border:1px solid #b9c4cd; border-radius:10px; }
+  table.te-table { width:100%; border-collapse:collapse; font-size:13.5px; background:#fff; }
+  table.te-table th { background:#eaf0f5; color:#16324a; font-weight:700; padding:10px 8px; border:1px solid #b9c4cd; text-align:center; white-space:nowrap; }
+  table.te-table td { padding:9px 8px; border:1px solid #c7d2dc; text-align:center; vertical-align:middle; }
+  table.te-table td.te-escolas-cell { text-align:left; }
+  table.te-table tr.te-total-row td { font-weight:700; background:#f3f7fa; }
+  .te-empty-msg { text-align:center; color:#8a96a1; padding:26px; font-size:14px; }
+  .te-summary-row { display:flex; gap:24px; margin-top:14px; flex-wrap:wrap; }
+  .te-summary-item { background:#f3f7fa; border:1px solid #cddce7; border-radius:10px; padding:12px 18px; }
+  .te-summary-label { font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:#5b6b7a; }
+  .te-summary-value { font-size:18px; font-weight:700; color:#16324a; margin-top:2px; }
+  .te-print-only { display:none; }
+  @media print {
+    .te-no-print { display:none !important; }
+    .te-print-only { display:block !important; }
+    body, .te-wrap { margin:0; padding:0; background:#fff; }
+    table.te-print-table { width:100%; border-collapse:collapse; font-size:12px; font-family: Arial, sans-serif; }
+    table.te-print-table th { background:#fff; font-weight:700; border:1px solid #000; padding:6px 6px; text-align:center; }
+    table.te-print-table td { border:1px solid #000; padding:6px 6px; text-align:center; }
+    table.te-print-table td.te-escolas-cell { text-align:left; }
+    table.te-print-table tr.te-total-row td { font-weight:700; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const DIAS_SEMANA = ["Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+
+function formatBRL(value) {
+  if (!isFinite(value)) return "R$ 0,00";
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+function formatNum(value, decimals = 2) {
+  if (!isFinite(value)) return (0).toFixed(decimals).replace(".", ",");
+  return value.toLocaleString("pt-BR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+function parseNum(str) {
+  if (typeof str === "number") return str;
+  if (!str) return 0;
+  const cleaned = String(str).replace(/\./g, "").replace(",", ".");
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+
+let idCounter = 1;
+function nextId() { return idCounter++; }
+function makeGeo() {
+  return {
+    id: nextId(),
+    numero: "",
+    kmDia: "",
+    escolas: [{ id: nextId(), nome: "" }],
+    diaGrupo: { dias: ["Segunda"], diasCount: "" },
+  };
+}
+
+function TransporteEscolar() {
+  const [valorKm, setValorKm] = useState("8,77");
+  const [geos, setGeos] = useState([makeGeo()]);
+
+  const valorKmNum = parseNum(valorKm);
+
+  const rows = useMemo(() => {
+    return geos.map((g) => {
+      const kmDia = parseNum(g.kmDia);
+      const escolasTxt = g.escolas.filter(e => e.nome.trim()).map(e => e.nome).join(" / ") || "—";
+      const dias = parseNum(g.diaGrupo.diasCount);
+      const valorDiario = kmDia * valorKmNum;
+      const valorCobrado = valorDiario * dias;
+      const kmMes = kmDia * dias;
+      const diaLabel = (g.diaGrupo.dias && g.diaGrupo.dias.length ? g.diaGrupo.dias : []).join("/") || "—";
+      return { rowId: g.id, numero: g.numero, escolasTxt, dia: diaLabel, kmDia, dias, valorDiario, valorCobrado, kmMes };
+    });
+  }, [geos, valorKmNum]);
+
+  const totalDias = rows.reduce((s, r) => s + r.dias, 0);
+  const totalValorCobrado = rows.reduce((s, r) => s + r.valorCobrado, 0);
+  const totalKmMes = rows.reduce((s, r) => s + r.kmMes, 0);
+  const mediaDia = totalDias > 0 ? totalKmMes / totalDias : 0;
+
+  function updateGeo(id, field, value) {
+    setGeos(prev => prev.map(g => g.id === id ? { ...g, [field]: value } : g));
+  }
+  function addGeo() { setGeos(prev => [...prev, makeGeo()]); }
+  function removeGeo(id) { setGeos(prev => prev.length > 1 ? prev.filter(g => g.id !== id) : prev); }
+  function addEscola(geoId) {
+    setGeos(prev => prev.map(g => g.id === geoId ? { ...g, escolas: [...g.escolas, { id: nextId(), nome: "" }] } : g));
+  }
+  function removeEscola(geoId, escolaId) {
+    setGeos(prev => prev.map(g => g.id === geoId ? { ...g, escolas: g.escolas.length > 1 ? g.escolas.filter(e => e.id !== escolaId) : g.escolas } : g));
+  }
+  function updateEscola(geoId, escolaId, nome) {
+    setGeos(prev => prev.map(g => g.id === geoId ? { ...g, escolas: g.escolas.map(e => e.id === escolaId ? { ...e, nome } : e) } : g));
+  }
+  function updateDiaGrupo(geoId, field, value) {
+    setGeos(prev => prev.map(g => g.id === geoId ? { ...g, diaGrupo: { ...g.diaGrupo, [field]: value } } : g));
+  }
+  function toggleDiaDay(geoId, dayName) {
+    setGeos(prev => prev.map(g => {
+      if (g.id !== geoId) return g;
+      const has = g.diaGrupo.dias.includes(dayName);
+      let novosDias;
+      if (has) {
+        novosDias = g.diaGrupo.dias.length > 1 ? g.diaGrupo.dias.filter(x => x !== dayName) : g.diaGrupo.dias;
+      } else {
+        novosDias = DIAS_SEMANA.filter(dd => g.diaGrupo.dias.includes(dd) || dd === dayName);
+      }
+      return { ...g, diaGrupo: { ...g.diaGrupo, dias: novosDias } };
+    }));
+  }
+  function handlePrint() { window.print(); }
+
+  return (
+    <div className="te-wrap">
+      <div className="te-header te-no-print">
+        <div>
+          <div className="te-title">Transporte escolar — cálculo mensal</div>
+          <div className="te-sub">Cadastre os GEOs e gere a tabela de valores automaticamente</div>
+        </div>
+        <button className="te-btn" onClick={handlePrint}>Gerar PDF</button>
+      </div>
+
+      <div className="te-no-print">
+        <div className="te-card-kmprice">
+          <div style={{ flex: "0 0 220px" }}>
+            <span className="te-label">Valor do km (R$)</span>
+            <input className="te-input" value={valorKm} onChange={e => setValorKm(e.target.value)} placeholder="8,77" inputMode="decimal" />
+          </div>
+          <div style={{ fontSize: 13, color: "#5b6b7a" }}>Este valor será usado no cálculo de todos os GEOs cadastrados.</div>
+        </div>
+
+        {geos.map((g, idx) => (
+          <div className="te-card" key={g.id}>
+            <div className="te-geo-head">
+              <span className="te-geo-badge">GEO {idx + 1}</span>
+              {geos.length > 1 && <button className="te-btn ghost" onClick={() => removeGeo(g.id)}>Remover GEO</button>}
+            </div>
+
+            <div className="te-grid2">
+              <div>
+                <span className="te-label">Número do GEO</span>
+                <input className="te-input" value={g.numero} onChange={e => updateGeo(g.id, "numero", e.target.value)} placeholder="Ex: 1210/2026" />
+              </div>
+              <div>
+                <span className="te-label">Km/dia</span>
+                <input className="te-input" value={g.kmDia} onChange={e => updateGeo(g.id, "kmDia", e.target.value)} placeholder="Ex: 468,40" inputMode="decimal" />
+              </div>
+            </div>
+
+            <div className="te-section-title">Escolas atendidas</div>
+            {g.escolas.map(e => (
+              <div className="te-escola-row" key={e.id}>
+                <input className="te-input" value={e.nome} onChange={ev => updateEscola(g.id, e.id, ev.target.value)} placeholder="Nome da escola" />
+                {g.escolas.length > 1 && <button className="te-remove" onClick={() => removeEscola(g.id, e.id)} aria-label="Remover escola">×</button>}
+              </div>
+            ))}
+            <button className="te-add-btn" onClick={() => addEscola(g.id)}>+ Adicionar escola</button>
+
+            <div className="te-section-title">Dias da semana em que o GEO roda</div>
+            <div className="te-diagroup">
+              <div className="te-checkboxes">
+                {DIAS_SEMANA.map(dd => (
+                  <label className={"te-daychip" + (g.diaGrupo.dias.includes(dd) ? " active" : "")} key={dd}>
+                    <input type="checkbox" checked={g.diaGrupo.dias.includes(dd)} onChange={() => toggleDiaDay(g.id, dd)} />
+                    {dd}
+                  </label>
+                ))}
+              </div>
+              <div className="te-diagroup-row">
+                <div style={{ flex: 1 }}>
+                  <span className="te-label" style={{ marginBottom: 4 }}>Nº de dias no mês (total desses dias combinados)</span>
+                  <input className="te-input" value={g.diaGrupo.diasCount} onChange={ev => updateDiaGrupo(g.id, "diasCount", ev.target.value)} placeholder="Ex: 12" inputMode="numeric" />
+                </div>
+              </div>
+              <div className="te-preview">Vai aparecer como: <strong>{g.diaGrupo.dias.join("/") || "—"}</strong></div>
+            </div>
+          </div>
+        ))}
+
+        <button className="te-btn secondary" onClick={addGeo}>+ Adicionar GEO</button>
+      </div>
+
+      <h3 style={{ margin: "26px 0 12px", fontSize: 16, fontWeight: 700, color: "#16324a" }} className="te-no-print">Tabela de valores</h3>
+
+      <div className="te-table-wrap te-no-print">
+        <table className="te-table">
+          <thead>
+            <tr>
+              <th>Escolas</th><th>Geo</th><th>Dias</th><th>Km/Dia Total</th><th>Preço/km</th><th>Valor Diário</th><th>Nº de Dias</th><th>Valor cobrado</th><th>Média/Dia</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr><td colSpan={9} className="te-empty-msg">Cadastre ao menos um GEO para ver a tabela.</td></tr>
+            ) : (
+              <>
+                {rows.map((r, i) => (
+                  <tr key={r.rowId}>
+                    <td className="te-escolas-cell">{r.escolasTxt}</td>
+                    <td>{r.numero || "—"}</td>
+                    <td>{r.dia}</td>
+                    <td>{formatNum(r.kmDia)}</td>
+                    <td>{formatBRL(valorKmNum)}</td>
+                    <td>{formatBRL(r.valorDiario)}</td>
+                    <td>{formatNum(r.dias, 0)}</td>
+                    <td>{formatBRL(r.valorCobrado)}</td>
+                    {i === 0 && <td rowSpan={rows.length}>{formatNum(mediaDia, 5)}</td>}
+                  </tr>
+                ))}
+                <tr className="te-total-row">
+                  <td></td><td></td><td></td><td></td><td></td><td></td>
+                  <td>{formatNum(totalDias, 0)}</td>
+                  <td>{formatBRL(totalValorCobrado)}</td>
+                </tr>
+              </>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {rows.length > 0 && (
+        <div className="te-summary-row te-no-print">
+          <div className="te-summary-item">
+            <div className="te-summary-label">Total de dias</div>
+            <div className="te-summary-value">{formatNum(totalDias, 0)}</div>
+          </div>
+          <div className="te-summary-item">
+            <div className="te-summary-label">Total do valor cobrado</div>
+            <div className="te-summary-value">{formatBRL(totalValorCobrado)}</div>
+          </div>
+          <div className="te-summary-item">
+            <div className="te-summary-label">Média/dia</div>
+            <div className="te-summary-value">{formatNum(mediaDia, 5)}</div>
+          </div>
+        </div>
+      )}
+
+      <div className="te-print-only">
+        <table className="te-print-table">
+          <thead>
+            <tr>
+              <th>Escolas</th><th>Geo</th><th>Dias</th><th>Km/Dia Total</th><th>Preço/km</th><th>Valor Diário</th><th>Nº de Dias</th><th>Valor cobrado</th><th>Média/Dia</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={r.rowId}>
+                <td className="te-escolas-cell">{r.escolasTxt}</td>
+                <td>{r.numero || "—"}</td>
+                <td>{r.dia}</td>
+                <td>{formatNum(r.kmDia)}</td>
+                <td>{formatBRL(valorKmNum)}</td>
+                <td>{formatBRL(r.valorDiario)}</td>
+                <td>{formatNum(r.dias, 0)}</td>
+                <td>{formatBRL(r.valorCobrado)}</td>
+                {i === 0 && <td rowSpan={rows.length}>{formatNum(mediaDia, 5)}</td>}
+              </tr>
+            ))}
+            <tr className="te-total-row">
+              <td></td><td></td><td></td><td></td><td></td><td></td>
+              <td>{formatNum(totalDias, 0)}</td>
+              <td>{formatBRL(totalValorCobrado)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<TransporteEscolar />);
+</script>
+</body>
+</html>
