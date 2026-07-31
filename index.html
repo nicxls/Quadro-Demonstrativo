@@ -322,7 +322,8 @@ function TransporteEscolar() {
   const mediaDia = totalDias > 0 ? totalKmMes / totalDias : 0;
 
   const valorDiarioContratoNum = parseNum(valorDiarioContrato);
-  const valorContratoTotal = valorDiarioContratoNum * totalDias;
+  const valorContratoCalculado = valorDiarioContratoNum * totalDias;
+  const valorContratoTotal = Math.min(valorContratoCalculado, totalValorCobrado);
   const valorExcedente = Math.max(0, totalValorCobrado - valorContratoTotal);
 
   function updateGeo(id, field, value) {
@@ -385,6 +386,16 @@ function TransporteEscolar() {
   function handlePrint() { window.print(); }
 
   const [copyStatus, setCopyStatus] = useState("");
+
+  function limparTudo() {
+    if (!window.confirm("Deseja realmente limpar todos os dados?")) return;
+    setTipo("contrato");
+    setValorKm("");
+    setValorDiarioContrato("");
+    setMesReferencia(defaultMonth());
+    setGeos([makeGeo()]);
+  }
+
 
   function copyTable() {
     const headers = ["Escolas","Geo","Dias","Km/Dia","Preço/km","Valor Diário","Nº de Dias","Valor cobrado","Média/Dia"];
@@ -483,6 +494,7 @@ function TransporteEscolar() {
         </div>
         <div className="te-header-actions">
           {copyStatus && <span className="te-copy-status">{copyStatus}</span>}
+          <button className="te-btn secondary" onClick={limparTudo}>Limpar tudo</button>
           <button className="te-btn primary" onClick={copyTable}><IconCopy />Copiar tabela</button>
         </div>
       </div>
