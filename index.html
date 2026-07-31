@@ -74,6 +74,14 @@
   .te-settings-field { flex: 0 0 200px; }
   .te-settings-hint { font-size:12.5px; color:var(--ink-soft); padding-bottom:2px; }
 
+  .te-type-selector { display:inline-flex; background: var(--surface); border:1px solid var(--border); border-radius: 999px; padding:4px; margin-bottom:20px; box-shadow: var(--shadow-card); }
+  .te-type-btn { border:none; background:transparent; font-family:inherit; font-size:13.5px; font-weight:600; color:var(--ink-soft); padding:9px 20px; border-radius:999px; cursor:pointer; transition: background .15s ease, color .15s ease; }
+  .te-type-btn:hover { color:var(--ink); }
+  .te-type-btn.active { background:var(--ink); color:#fff; }
+
+  .te-summary-item-excedente { border-color: var(--amber); background: var(--amber-tint); }
+  .te-summary-item-excedente .te-summary-value { color:#8a5f14; }
+
   .te-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft); margin-bottom:6px; display:block; }
   .te-input { width:100%; box-sizing:border-box; border:1.5px solid var(--border); border-radius: var(--radius-sm); padding:9px 11px; font-size:14px; font-family:inherit; color:var(--ink); background:var(--surface); transition: border-color .15s ease, box-shadow .15s ease; }
   .te-input:focus { outline:none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(22,35,44,0.08); }
@@ -274,7 +282,9 @@ const IconMap = () => (
 );
 
 function TransporteEscolar() {
+  const [tipo, setTipo] = useState("contrato");
   const [valorKm, setValorKm] = useState("");
+  const [valorDiarioContrato, setValorDiarioContrato] = useState("");
   const [mesReferencia, setMesReferencia] = useState(defaultMonth());
   const [geos, setGeos] = useState([makeGeo()]);
 
@@ -310,6 +320,10 @@ function TransporteEscolar() {
   const totalValorCobrado = rows.reduce((s, r) => s + r.valorCobrado, 0);
   const totalKmMes = rows.reduce((s, r) => s + r.kmMes, 0);
   const mediaDia = totalDias > 0 ? totalKmMes / totalDias : 0;
+
+  const valorDiarioContratoNum = parseNum(valorDiarioContrato);
+  const valorContratoTotal = valorDiarioContratoNum * totalDias;
+  const valorExcedente = Math.max(0, totalValorCobrado - valorContratoTotal);
 
   function updateGeo(id, field, value) {
     setGeos(prev => prev.map(g => g.id === id ? { ...g, [field]: value } : g));
@@ -390,6 +404,11 @@ function TransporteEscolar() {
       ].join("\t"));
     });
     tsvLines.push(["", "", "", "", "", "", formatNum(totalDias, 0), formatBRL(totalValorCobrado), ""].join("\t"));
+    if (tipo === "contrato" && valorDiarioContratoNum > 0) {
+      tsvLines.push("");
+      tsvLines.push(`Valor do contrato\t${formatBRL(valorContratoTotal)}`);
+      tsvLines.push(`Valor excedente\t${formatBRL(valorExcedente)}`);
+    }
     const tsv = tsvLines.join("\n");
 
     let htmlRows = "";
@@ -412,9 +431,20 @@ function TransporteEscolar() {
       `<td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${formatBRL(totalValorCobrado)}</td>` +
       "</tr>";
 
-    const html = `<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;">` +
+    const table = `<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;">` +
       `<thead><tr>${headers.map(h => `<th style="border:1px solid #000;padding:6px;background:#eaf0f5;">${h}</th>`).join("")}</tr></thead>` +
       `<tbody>${htmlRows}${htmlTotalRow}</tbody></table>`;
+
+    let contratoBlock = "";
+    if (tipo === "contrato" && valorDiarioContratoNum > 0) {
+      contratoBlock = `<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;margin-top:10px;">` +
+        `<tbody>` +
+        `<tr><td style="border:1px solid #000;padding:6px;">Valor do contrato</td><td style="border:1px solid #000;padding:6px;font-weight:bold;">${formatBRL(valorContratoTotal)}</td></tr>` +
+        `<tr><td style="border:1px solid #000;padding:6px;">Valor excedente</td><td style="border:1px solid #000;padding:6px;font-weight:bold;">${formatBRL(valorExcedente)}</td></tr>` +
+        `</tbody></table>`;
+    }
+
+    const html = table + contratoBlock;
 
     async function doCopy() {
       try {
@@ -458,17 +488,42 @@ function TransporteEscolar() {
       </div>
 
       <div className="te-no-print">
+        <div className="te-type-selector">
+          <button
+            className={"te-type-btn" + (tipo === "contrato" ? " active" : "")}
+            onClick={() => setTipo("contrato")}
+          >
+            Contrato
+          </button>
+          <button
+            className={"te-type-btn" + (tipo === "indenizatorio" ? " active" : "")}
+            onClick={() => setTipo("indenizatorio")}
+          >
+            Indenizatório
+          </button>
+        </div>
+
         <div className="te-panel te-settings">
           <div className="te-settings-field">
-            <span className="te-label">Mês de referência</span>
+            <span className="te-label">Mês</span>
             <input className="te-input" type="month" value={mesReferencia} onChange={e => setMesReferencia(e.target.value)} />
           </div>
           <div className="te-settings-field">
             <span className="te-label">Valor do km (R$)</span>
             <input className="te-input mono" value={valorKm} onChange={e => setValorKm(e.target.value)} placeholder="0,00" inputMode="decimal" />
           </div>
+          {tipo === "contrato" && (
+            <div className="te-settings-field">
+              <span className="te-label">Valor diário do contrato (R$)</span>
+              <input className="te-input mono" value={valorDiarioContrato} onChange={e => setValorDiarioContrato(e.target.value)} placeholder="0,00" inputMode="decimal" />
+            </div>
+          )}
           <div className="te-settings-hint">Esses valores são usados no cálculo de todos os GEOs cadastrados abaixo.</div>
         </div>
+      </div>
+
+      <>
+      <div className="te-no-print">
 
         <div className="te-route">
           {geos.map((g, idx) => (
@@ -628,8 +683,21 @@ function TransporteEscolar() {
             <div className="te-summary-label">Média/dia</div>
             <div className="te-summary-value">{formatNum(mediaDia, 5)}</div>
           </div>
+          {tipo === "contrato" && valorDiarioContratoNum > 0 && (
+            <>
+              <div className="te-summary-item">
+                <div className="te-summary-label">Valor do contrato</div>
+                <div className="te-summary-value">{formatBRL(valorContratoTotal)}</div>
+              </div>
+              <div className="te-summary-item te-summary-item-excedente">
+                <div className="te-summary-label">Valor excedente</div>
+                <div className="te-summary-value">{formatBRL(valorExcedente)}</div>
+              </div>
+            </>
+          )}
         </div>
       )}
+      </>
 
       <div className="te-print-only">
         <table className="te-print-table">
